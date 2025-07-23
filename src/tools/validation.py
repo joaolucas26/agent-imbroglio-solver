@@ -11,7 +11,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 MODELO_VALIDACAO = genai.GenerativeModel('gemini/gemini-2.0-flash')
 
 def create_validation_prompt(word: str) -> str:
-    prompt_path = os.path.join(os.path.dirname(__file__), '../../data/prompt.txt')
+    prompt_path = os.path.join('data/validation_word_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
         prompt_template = f.read()
 
