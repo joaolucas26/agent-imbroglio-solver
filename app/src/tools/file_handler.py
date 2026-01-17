@@ -1,0 +1,83 @@
+import json
+from smolagents import tool
+
+
+@tool
+def load_validated_words(filepath: str) -> set:
+    """Carrega palavras validadas do cache para evitar re-validação.
+    
+    Esta função funciona como um cache handler, permitindo que o agente
+    verifique quais palavras já foram validadas anteriormente, evitando
+    chamadas desnecessárias para ferramentas de validação.
+    
+    Args:
+        filepath (str): Caminho para o arquivo de cache das palavras validadas
+        
+    Returns:
+        set: Conjunto de palavras já validadas (em lowercase)
+        
+    Usage:
+        Chame esta função ANTES de validar palavras para verificar se elas
+        já estão no cache. Só valide palavras que não estão no conjunto retornado.
+    """
+    validated_words = set()
+    with open(filepath, "r", encoding="utf-8") as f:
+        for line in f:
+            word = line.strip().lower()
+            if word:
+                validated_words.add(word)
+    return validated_words
+
+
+@tool
+def save_validated_words(filepath: str, words: set) -> None:
+    """Salva palavras validadas no cache para uso futuro.
+    
+    Esta função funciona como um cache handler, salvando palavras que foram
+    validadas para evitar re-validação em execuções futuras do agente.
+    
+    Args:
+        filepath (str): Caminho para o arquivo de cache das palavras validadas
+        words (set): Conjunto de palavras validadas para salvar no cache
+        
+    Returns:
+        None
+        
+    Usage:
+        Chame esta função APÓS validar novas palavras para adicioná-las ao cache.
+        Combine com as palavras já existentes no cache antes de salvar.
+    """
+    with open(filepath, "w", encoding="utf-8") as f:
+        for word in sorted(words):
+            f.write(f"{word}\n")
+
+
+@tool
+def read_json_file(file_path: str) -> dict:
+    """
+    Reads a JSON file from the specified path and returns its content as a Python dictionary or list.
+
+    Args:
+        file_path (str): The absolute or relative path to the JSON file.
+
+    Returns:
+        dict or list: The parsed content of the JSON file.
+    """
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data
+
+
+@tool
+def rewrite_words_dict(word_dict_with_invalid_words_removed: dict) -> None:
+    """
+    Use this tool to rewrite the words.json file with the updated list of valid words.
+    Every invalid word must be removed from the json before saving.
+
+    Args:
+        word_dict_with_invalid_words_removed (dict): The new list of valid words to be saved.
+    """
+
+    with open("app\\src\\data\\all_words.json", "w", encoding="utf-8") as f:
+        json.dump(word_dict_with_invalid_words_removed, f, ensure_ascii=False, indent=4)

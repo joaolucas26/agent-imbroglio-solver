@@ -1,0 +1,24 @@
+{
+    "model": {
+        "agent_model_id": "gemini/gemini-3-flash-preview",
+        "validation_model_id": "gemini/gemini-2.5-flash",
+        "generation_config": {
+            "response_mime_type": "application/json",
+            "temperature": 0.1
+        }
+    },
+    "paths": {
+        "words_data": "data/words.json",
+        "ia_validation_cache": "results/ia_validation_cache.json",
+        "validation_prompt": "data/validation_word_prompt.txt",
+        "daily_puzzles_config": "data/daily_puzzles_config.json",
+        "prompts": "src/prompts.yaml"
+    },
+    "solver_settings": {
+        "max_words": 3,
+        "time_limit_seconds": 20,
+        "max_solutions": 3000,
+        "best_solutions": 1000,
+        "num_final_solutions": 20
+    }
+}
