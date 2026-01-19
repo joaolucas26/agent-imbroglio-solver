@@ -1,37 +1,31 @@
 import json
 from smolagents import tool
+import time
 
 from ..utils.prompt_manager import fill_prompt, load_prompts
 from ..utils.client_utils import load_client, load_config
 
 
 @tool
-def evaluate_words_ai(words_to_validate: list, new_instructions: str = "") -> dict:
+def evaluate_words_ai(
+    words_to_validate: list, new_instructions: str = "", batch_size: int = 100
+) -> dict:
     """
     Evaluates a list of words using a specialized AI language model to determine its validity for a word game.
-    The list must contain more than 50 words for evaluation.
+    Processes words in batches to handle large lists efficiently.
 
     Args:
         words_to_validate (list): A list of words to be evaluated.
         new_instructions (str, optional): Additional instructions to guide the AI's evaluation. Defaults to an empty string.
+        batch_size (int, optional): Number of words to process in each batch. Defaults to 100.
 
     Returns:
-        dict: A dictionary with keys "veredito" (verdict) and "justificativa" (justification), or an error message if validation fails.
+        dict: A dictionary where each key is a word and the value is another dict with "veredito" and "justificativa".
+              Format: {"palavra": {"veredito": "VALIDA/INVALIDA/DUVIDA", "justificativa": "reason"}}
     """
-
-    if len(words_to_validate) <= 50:
-        raise ValueError(
-            "A lista de palavras para validação deve conter mais de 50 palavras para avaliação pela IA."
-        )
 
     if not words_to_validate:
         raise ValueError("A lista de palavras para validação está vazia.")
-
-    word_prompt = fill_prompt(
-        load_prompts("validation_prompt"),
-        words=words_to_validate,
-        new_instructions=new_instructions,
-    )
 
     client = load_client()
     config = load_config()
@@ -40,50 +34,63 @@ def evaluate_words_ai(words_to_validate: list, new_instructions: str = "") -> di
     model_name = model_config.get("validation_model_id")
     generation_config = model_config.get("generation_config", {})
 
-    try:
-        response = client.models.generate_content(
-            model=model_name, contents=word_prompt, config=generation_config
+    all_results = {}
+    for i in range(0, len(words_to_validate), batch_size):
+        batch = words_to_validate[i : i + batch_size]
+        print(
+            f"Processando lote {i//batch_size + 1}: {len(batch)} palavras (palavras {i+1}-{min(i+batch_size, len(words_to_validate))})"
         )
 
-        cleaned_text = response.text.strip()
+        word_prompt = fill_prompt(
+            load_prompts("validation_prompt"),
+            words=batch,
+            new_instructions=new_instructions,
+        )
 
-        if cleaned_text.startswith("```json"):
-            cleaned_text = cleaned_text[7:]
-        if cleaned_text.endswith("```"):
-            cleaned_text = cleaned_text[:-3]
-
-        cleaned_text = cleaned_text.strip()
-
-        result_json = json.loads(cleaned_text)
-
-        if (
-            not isinstance(result_json, dict)
-            or "veredito" not in result_json
-            or "justificativa" not in result_json
-        ):
-            raise ValueError(
-                "Resposta da IA não contém os campos esperados 'veredito' e 'justificativa'."
+        try:
+            response = client.models.generate_content(
+                model=model_name, contents=word_prompt
             )
 
-        valid_verdicts = ["VALIDA", "INVALIDA", "DUVIDA"]
-        if result_json["veredito"] not in valid_verdicts:
-            raise ValueError(
-                f"Veredito inválido retornado pela IA: {result_json['veredito']}"
-            )
+            try:
+                result_json = json.loads(response.text)
+                if not isinstance(result_json, dict):
+                    raise ValueError("Resposta da IA deve ser um dicionário.")
 
-        return result_json
+                all_results.update(result_json)
 
-    except json.JSONDecodeError as e:
-        raise ValueError("Resposta da IA não é um JSON válido.")
-    except Exception as e:
+            except json.JSONDecodeError as e:
+                print(f"Erro de JSON no lote {i//batch_size + 1}: {str(e)}")
+                for word in batch:
+                    all_results[word] = {
+                        "veredito": "ERRO",
+                        "justificativa": f"Erro no processamento do lote: JSON inválido",
+                    }
 
-        raise RuntimeError(f"Erro ao avaliar palavras com IA: {str(e)}")
+        except Exception as e:
+            print(f"Erro no lote {i//batch_size + 1}: {str(e)}")
+            for word in batch:
+                all_results[word] = {
+                    "veredito": "ERRO",
+                    "justificativa": f"Erro na requisição: {str(e)}",
+                }
+
+        time.sleep(10)
+
+    if not all_results:
+        raise RuntimeError(
+            "Nenhum resultado foi obtido durante o processamento em lotes."
+        )
+
+    return all_results
 
 
 @tool
 def evaluate_words_human(words_to_evaluate: str) -> dict:
     """
     Placeholder function for human evaluation of words.
+    One word at a time should be evaluated by a human, who will provide the verdict
+    Call this tool many times you want until all words are you dont know the meaning are evaluated.
 
     Args:
         words_to_evaluate (str): A string containing words to be evaluated.
