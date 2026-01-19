@@ -9,7 +9,7 @@ from src.tools.word_validation import evaluate_words_ai, evaluate_words_human
 from src.tools.file_handler import (
     load_validated_words,
     save_validated_words,
-    read_json_file,
+    # read_json_file,
     rewrite_words_dict,
 )
 
@@ -38,7 +38,7 @@ def main():
             find_solutions,
             evaluate_words_human,
             evaluate_words_ai,
-            read_json_file,
+            # read_json_file,
             save_validated_words,
             load_validated_words,
             # rewrite_words_dict
@@ -62,7 +62,7 @@ def main():
         "o",
         "o",
         "o",
-        "",
+        "r",
         "r",
         "t",
     ]

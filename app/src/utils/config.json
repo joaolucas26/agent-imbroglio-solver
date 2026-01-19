@@ -1,7 +1,7 @@
 {
     "model": {
         "agent_model_id": "gemini/gemini-3-flash-preview",
-        "validation_model_id": "gemini/gemini-2.5-flash",
+        "validation_model_id": "gemini-3-flash-preview",
         "generation_config": {
             "response_mime_type": "application/json",
             "temperature": 0.1

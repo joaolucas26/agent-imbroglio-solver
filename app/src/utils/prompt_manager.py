@@ -17,10 +17,3 @@ def load_prompts(prompt_name) -> Dict[str, str]:
 def fill_prompt(prompt_template: str, **variables) -> str:
     template = Template(prompt_template)
     return template.render(**variables)
-
-
-x = load_prompts("task_prompt")
-print(x)
-y = fill_prompt(x, letters=["a", "b", "c"], solver_settings_str="settings")
-
-print(y)
