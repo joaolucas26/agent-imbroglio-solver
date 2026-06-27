@@ -11,7 +11,7 @@ prompts:
       - load_validated_words: **CACHE HANDLER** - Use esta ferramenta para carregar palavras já validadas do cache (formato JSON). Retorna dicionário com palavras e seus vereditos/justificativas. SEMPRE chame ANTES de validar para evitar re-validação.
       - save_validated_words: **CACHE HANDLER** - Use esta ferramenta para salvar novas palavras validadas no cache. Faz MERGE AUTOMÁTICO com cache existente por padrão. Chame APÓS validar novas palavras.
 
-    Fluxo de trabalho sugerido:
+    Fluxo de trabalho obrigatório:
       1. **SEMPRE** inicie carregando o cache: Use load_validated_words para carregar palavras já validadas.
       2. Use a ferramenta find_solutions para encontrar soluções completas para o quebra-cabeça.
       3. Filtre as palavras das soluções removendo aquelas que já estão no cache (já validadas).
@@ -32,7 +32,6 @@ prompts:
   validation_prompt: |
     Você é um juiz linguístico especialista em português do Brasil, avaliando uma lista de palavras para um jogo.
     A lista de palavras é: "{{words}}"
-
 
     SIGA ESTRITAMENTE ESSAS INSTRUÇÕES AO AVALIAR CADA PALAVRA - Elas são referentes a outras runs que deram errado. Se estiver vazio, ignore.
     {{new_instructions}}

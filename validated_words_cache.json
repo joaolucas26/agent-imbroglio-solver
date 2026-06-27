@@ -1,0 +1,29 @@
+{
+  "controlaria": {
+    "veredito": "VALIDA",
+    "justificativa": ""
+  },
+  "golo": {
+    "veredito": {
+      "veredito": "INVALIDA",
+      "justificativa": "Avaliação realizada por humano."
+    },
+    "justificativa": "Avaliação humana"
+  },
+  "já": {
+    "veredito": "VALIDA",
+    "justificativa": ""
+  },
+  "alcoólatra": {
+    "veredito": "VALIDA",
+    "justificativa": ""
+  },
+  "jongo": {
+    "veredito": "VALIDA",
+    "justificativa": ""
+  },
+  "ir": {
+    "veredito": "VALIDA",
+    "justificativa": ""
+  }
+}

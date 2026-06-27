@@ -103,7 +103,7 @@ def find_solutions(puzzle_letters: list[str]) -> List[List[Dict]]:
             solution_key = tuple(
                 sorted(word["normalized"] for word in current_solution)
             )
-            print("solution key: ", solution_key)
+            # print("solution key: ", solution_key)
             if solution_key not in used_solutions:
                 solutions.append(current_solution.copy())
                 used_solutions.add(solution_key)
@@ -112,7 +112,7 @@ def find_solutions(puzzle_letters: list[str]) -> List[List[Dict]]:
         if len(current_solution) >= max_words:
             return
 
-        for word in possible_words:
+        for word in possible_words:  
             if can_form_word(remaining_letters, word["normalized"]):
                 new_remaining = remaining_letters.copy()
                 for letter in word["normalized"]:
@@ -130,5 +130,7 @@ def find_solutions(puzzle_letters: list[str]) -> List[List[Dict]]:
 
     filtered_solutions = filter_solutions(solutions)
     solutions_with_scores = calculate_solutions_scores(filtered_solutions)
+
+    print("quantidade de soluções únicas após filtro: ", len(solutions_with_scores))
 
     return solutions_with_scores[:best_solutions]

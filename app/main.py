@@ -73,7 +73,6 @@ def main():
     )
 
     final_solutions = agent.run(agent_task)
-
     print("--- Top Solutions Found by Agent ---")
     print(final_solutions)
 

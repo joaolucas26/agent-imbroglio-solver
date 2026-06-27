@@ -34,6 +34,9 @@ def evaluate_words_ai(
     model_name = model_config.get("validation_model_id")
     generation_config = model_config.get("generation_config", {})
 
+    max_retries = 3
+    retry_base_delay = 10
+
     all_results = {}
     for i in range(0, len(words_to_validate), batch_size):
         batch = words_to_validate[i : i + batch_size]
@@ -47,33 +50,53 @@ def evaluate_words_ai(
             new_instructions=new_instructions,
         )
 
-        try:
-            response = client.models.generate_content(
-                model=model_name, contents=word_prompt
-            )
-
+        attempt = 0
+        while True:
             try:
-                result_json = json.loads(response.text)
-                if not isinstance(result_json, dict):
-                    raise ValueError("Resposta da IA deve ser um dicionário.")
+                response = client.models.generate_content(
+                    model=model_name, contents=word_prompt
+                )
 
-                all_results.update(result_json)
+                try:
+                    result_json = json.loads(response.text)
+                    if not isinstance(result_json, dict):
+                        raise ValueError("Resposta da IA deve ser um dicionário.")
 
-            except json.JSONDecodeError as e:
-                print(f"Erro de JSON no lote {i//batch_size + 1}: {str(e)}")
+                    all_results.update(result_json)
+                    break
+
+                except json.JSONDecodeError as e:
+                    print(f"Erro de JSON no lote {i//batch_size + 1}: {str(e)}")
+                    for word in batch:
+                        all_results[word] = {
+                            "veredito": "ERRO",
+                            "justificativa": f"Erro no processamento do lote: JSON inválido",
+                        }
+                    break
+
+            except Exception as e:
+                error_message = str(e)
+                is_unavailable_503 = (
+                    "503 UNAVAILABLE" in error_message
+                    and "high demand" in error_message.lower()
+                )
+
+                if is_unavailable_503 and attempt < max_retries:
+                    attempt += 1
+                    wait_time = retry_base_delay * attempt
+                    print(
+                        f"Lote {i//batch_size + 1}: modelo indisponível (503). Tentativa {attempt}/{max_retries} em {wait_time}s."
+                    )
+                    time.sleep(wait_time)
+                    continue
+
+                print(f"Erro no lote {i//batch_size + 1}: {error_message}")
                 for word in batch:
                     all_results[word] = {
                         "veredito": "ERRO",
-                        "justificativa": f"Erro no processamento do lote: JSON inválido",
+                        "justificativa": f"Erro na requisição: {error_message}",
                     }
-
-        except Exception as e:
-            print(f"Erro no lote {i//batch_size + 1}: {str(e)}")
-            for word in batch:
-                all_results[word] = {
-                    "veredito": "ERRO",
-                    "justificativa": f"Erro na requisição: {str(e)}",
-                }
+                break
 
         time.sleep(10)
 
@@ -99,7 +122,7 @@ def evaluate_words_human(words_to_evaluate: str) -> dict:
     """
 
     print("Palavras para avaliação humana:", words_to_evaluate)
-    human_answer = input("Por favor, insira o veredito (VALIDA, INVALIDA, DUVIDA): ")
+    human_answer = input("Por favor, insira o veredito (VALIDA, INVALIDA): ")
     return {
         "veredito": human_answer,
         "justificativa": "Avaliação realizada por humano.",
